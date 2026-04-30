@@ -195,3 +195,10 @@ make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" WEBHOO
 - `scripts/api_smoke.py` is a useful post-deploy sanity check after infra or env changes.
 - For Windows operators, `scripts/up.ps1`, `scripts/down.ps1`, and `scripts/status.ps1` are the
   quickest entry points for day-to-day stack operations.
+
+## Branch and PR Convention
+
+- Branch names: `feat/<short-topic>`, `fix/<short-topic>`, `chore/<short-topic>`.
+- Keep PRs small and single-purpose when possible.
+- PR title format: `<type>: <what changed>` (example: `fix: enforce trade-start AND gate`).
+- Use `.github/pull_request_template.md` and complete `Summary`, `Why`, and `Test Plan`.
