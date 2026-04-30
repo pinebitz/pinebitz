@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: up down restart ps logs logs-api logs-db logs-prom build migrate smoke api-smoke pg-ping status test-trade-start
+.PHONY: up down restart ps logs logs-api logs-db logs-prom build migrate smoke api-smoke pg-ping status test-trade-start test-trade-start-examples
 
 up:
 	$(COMPOSE) up -d --build
@@ -49,3 +49,6 @@ status:
 
 test-trade-start:
 	powershell -ExecutionPolicy Bypass -File ./scripts/test_trade_start_conditions.ps1 -ApiBaseUrl "$(or $(API_BASE_URL),http://127.0.0.1:8000)" -OwnerKey "$(OWNER_KEY)" -PlanName "$(PLAN_NAME)" -Symbol "$(or $(SYMBOL),BTCUSDT)" $(if $(WEBHOOK_SECRET),-WebhookSecret "$(WEBHOOK_SECRET)") $(if $(VERBOSE_DETAIL),-VerboseDetail)
+
+test-trade-start-examples:
+	powershell -ExecutionPolicy Bypass -File ./scripts/send_trade_start_examples.ps1 -ApiBaseUrl "$(or $(API_BASE_URL),http://127.0.0.1:8000)" -OwnerKey "$(OWNER_KEY)" -PlanName "$(PLAN_NAME)" -Symbol "$(or $(SYMBOL),BTCUSDT)" $(if $(WEBHOOK_SECRET),-WebhookSecret "$(WEBHOOK_SECRET)")

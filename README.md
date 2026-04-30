@@ -187,6 +187,12 @@ make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" API_BA
 make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" WEBHOOK_SECRET=your-secret
 ```
 
+Indicator payload acceptance quick check (auto-runs RSI/MACD/Stochastic/MA examples):
+
+```powershell
+make test-trade-start-examples OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo"
+```
+
 Current runtime support by condition kind:
 
 - Works directly from webhook signal:
