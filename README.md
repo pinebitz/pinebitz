@@ -167,6 +167,26 @@ Optional order helper:
 python scripts/order_usdm_testnet.py
 ```
 
+Trade start conditions (AND gate) validation:
+
+```powershell
+# Required: OWNER_KEY and PLAN_NAME
+make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo"
+```
+
+Verbose trade start details (prints `risk_checks.trade_start` for each case):
+
+```powershell
+make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" VERBOSE_DETAIL=1
+```
+
+Optional overrides:
+
+```powershell
+make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" API_BASE_URL=http://127.0.0.1:8000
+make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" WEBHOOK_SECRET=your-secret
+```
+
 ## Handoff Notes
 
 - API container does not run migrations automatically. Run `make migrate` after schema changes.
