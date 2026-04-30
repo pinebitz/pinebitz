@@ -193,6 +193,14 @@ Indicator payload acceptance check (runs all 11 dashboard technical kinds one-by
 make test-trade-start-examples OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo"
 ```
 
+If anything fails, prune the dashboard dropdown and backend `TECHNICAL_TRADE_START_KINDS` down to only indicators that passed this run (writes `pinebitz/web/dashboard.js` and `pinebitz/api/app.py`):
+
+```powershell
+make trade-start-examples-prune OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo"
+```
+
+If every case passes (including already after pruning), `-ApplyPrune` does nothing to source files—the command still exits successfully.
+
 Current runtime support by condition kind:
 
 - Works directly from webhook signal:
