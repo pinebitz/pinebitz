@@ -187,6 +187,18 @@ make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" API_BA
 make test-trade-start OWNER_KEY=smoke-owner PLAN_NAME="BTC USDT DCA Demo" WEBHOOK_SECRET=your-secret
 ```
 
+Current runtime support by condition kind:
+
+- Works directly from webhook signal:
+  - `tv_webhook` (TradingView custom signal)
+  - `tv_screener` (timeframe + side alignment)
+  - `qfl_long` (requires buy side)
+- Technical kinds are accepted but require `pinebitz_tsc` proof in webhook payload:
+  - `rsi`, `ultimate_oscillator`, `bollinger_pctb`, `ma`, `adx`
+  - `stochastic`, `macd`, `parabolic_sar`, `mfi`, `cci`, `heikin_ashi`
+- If a technical kind has no `pinebitz_tsc` proof, the job is rejected with
+  `technical_requires_pinebitz_tsc`.
+
 ## Handoff Notes
 
 - API container does not run migrations automatically. Run `make migrate` after schema changes.
