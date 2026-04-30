@@ -327,7 +327,7 @@ const TRADE_START_KINDS = [
   { v: 'heikin_ashi', label: 'Heikin Ashi' },
 ];
 const TRADE_START_DIRECT_KINDS = new Set(['tv_webhook', 'tv_screener', 'qfl_long']);
-const TRADE_START_PROOF_KINDS = new Set([
+const TRADE_START_PAYLOAD_KINDS = new Set([
   'rsi',
   'ultimate_oscillator',
   'bollinger_pctb',
@@ -440,7 +440,7 @@ function tscNumberHtml(dataKey, val, attrs = {}) {
 function tradeStartKindOptionsHtml(kind) {
   const supportTag = (v) => {
     if (TRADE_START_DIRECT_KINDS.has(v)) return 'direct';
-    if (TRADE_START_PROOF_KINDS.has(v)) return 'proof-required';
+    if (TRADE_START_PAYLOAD_KINDS.has(v)) return 'payload-eval';
     return 'unknown';
   };
   return TRADE_START_KINDS.map(

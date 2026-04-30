@@ -631,11 +631,164 @@ def _trade_start_proof_for_row(raw_payload: dict[str, object], index: int, kind:
     return None
 
 
+def _num_from_obj(obj: object, *keys: str) -> float | None:
+    if not isinstance(obj, dict):
+        return None
+    for key in keys:
+        if key not in obj:
+            continue
+        value = obj.get(key)
+        if value in (None, ""):
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _text_from_obj(obj: object, *keys: str) -> str | None:
+    if not isinstance(obj, dict):
+        return None
+    for key in keys:
+        if key not in obj:
+            continue
+        value = obj.get(key)
+        if value is None:
+            continue
+        s = str(value).strip().lower()
+        if s:
+            return s
+    return None
+
+
+def _indicator_metric(raw_payload: dict[str, object], kind: str, *aliases: str) -> float | None:
+    direct = _payload_number(raw_payload, *aliases)
+    if direct is not None:
+        return direct
+    prefixed = _payload_number(raw_payload, *(f"{kind}_{x}" for x in aliases))
+    if prefixed is not None:
+        return prefixed
+    for root_key in ("indicators", "pinebitz_indicators", "indicator_values"):
+        root = raw_payload.get(root_key)
+        if not isinstance(root, dict):
+            continue
+        node = root.get(kind)
+        nested = _num_from_obj(node, *aliases)
+        if nested is not None:
+            return nested
+    node_direct = raw_payload.get(kind)
+    nested_direct = _num_from_obj(node_direct, *aliases)
+    if nested_direct is not None:
+        return nested_direct
+    return None
+
+
+def _compare_numeric(left: float | None, op: str | None, right: float | None) -> bool | None:
+    if left is None or right is None:
+        return None
+    token = str(op or "").strip().lower()
+    if token in ("lt", "<"):
+        return left < right
+    if token in ("gt", ">"):
+        return left > right
+    if token in ("lte", "<="):
+        return left <= right
+    if token in ("gte", ">="):
+        return left >= right
+    return None
+
+
+def _evaluate_technical_row(
+    *,
+    kind: str,
+    params: dict[str, object],
+    signal: TradingViewSignalOut,
+) -> tuple[bool, str]:
+    raw = signal.raw_payload
+    if kind in ("rsi", "mfi", "cci", "ultimate_oscillator"):
+        value = _indicator_metric(raw, kind, kind, "value")
+        cmp_result = _compare_numeric(value, str(params.get("compare") or "lt"), _num_from_obj(params, "value"))
+        if cmp_result is None:
+            return False, f"{kind}_value_missing"
+        return (True, f"{kind}_condition_ok") if cmp_result else (False, f"{kind}_condition_failed")
+    if kind == "adx":
+        adx_value = _indicator_metric(raw, kind, "adx", "value")
+        threshold = _num_from_obj(params, "threshold")
+        if adx_value is None or threshold is None:
+            return False, "adx_value_missing"
+        return (True, "adx_threshold_ok") if adx_value >= threshold else (False, "adx_threshold_failed")
+    if kind == "bollinger_pctb":
+        pctb = _indicator_metric(raw, kind, "pctb", "percent_b", "value")
+        if pctb is None:
+            return False, "bollinger_pctb_missing"
+        cond = str(params.get("pctb_condition") or "below_lower").strip().lower()
+        if cond == "below_lower":
+            return (True, "bollinger_below_lower") if pctb < 0 else (False, "bollinger_not_below_lower")
+        if cond == "above_upper":
+            return (True, "bollinger_above_upper") if pctb > 1 else (False, "bollinger_not_above_upper")
+        return False, "bollinger_condition_unknown"
+    if kind == "ma":
+        ma_val = _indicator_metric(raw, kind, "ma", "value")
+        price = signal.price if signal.price is not None else _payload_number(raw, "close", "price")
+        if ma_val is None or price is None:
+            return False, "ma_price_or_value_missing"
+        cond = str(params.get("condition") or "price_above").strip().lower()
+        if cond == "price_above":
+            return (True, "ma_price_above") if price > ma_val else (False, "ma_price_not_above")
+        if cond == "price_below":
+            return (True, "ma_price_below") if price < ma_val else (False, "ma_price_not_below")
+        return False, "ma_condition_unknown"
+    if kind == "stochastic":
+        k_val = _indicator_metric(raw, kind, "k", "stoch_k", "k_value")
+        d_val = _indicator_metric(raw, kind, "d", "stoch_d", "d_value")
+        k_ok = _compare_numeric(k_val, str(params.get("k_condition") or "lt"), _num_from_obj(params, "k_signal_value"))
+        if k_ok is None:
+            return False, "stochastic_k_missing"
+        cross = str(params.get("crossover") or "k_cross_up_d").strip().lower()
+        if d_val is None:
+            return False, "stochastic_d_missing"
+        cross_ok = (k_val > d_val) if cross == "k_cross_up_d" else (k_val < d_val)
+        ok = bool(k_ok and cross_ok)
+        return (True, "stochastic_condition_ok") if ok else (False, "stochastic_condition_failed")
+    if kind == "macd":
+        macd_val = _indicator_metric(raw, kind, "macd", "macd_line", "value")
+        signal_val = _indicator_metric(raw, kind, "signal", "signal_line")
+        if macd_val is None or signal_val is None:
+            return False, "macd_value_missing"
+        trig = str(params.get("macd_trigger") or "crossing_up").strip().lower()
+        cross_ok = (macd_val > signal_val) if trig == "crossing_up" else (macd_val < signal_val)
+        line_trig = str(params.get("line_trigger") or "less_than_0").strip().lower()
+        line_ok = (macd_val < 0) if line_trig == "less_than_0" else (macd_val > 0)
+        return (True, "macd_condition_ok") if (cross_ok and line_ok) else (False, "macd_condition_failed")
+    if kind == "parabolic_sar":
+        sar = _indicator_metric(raw, kind, "sar", "psar", "value")
+        price = signal.price if signal.price is not None else _payload_number(raw, "close", "price")
+        if sar is None or price is None:
+            return False, "parabolic_sar_missing"
+        trig = str(params.get("trigger") or "flip_bull").strip().lower()
+        if trig == "flip_bull":
+            return (True, "parabolic_sar_bull") if price > sar else (False, "parabolic_sar_not_bull")
+        if trig == "flip_bear":
+            return (True, "parabolic_sar_bear") if price < sar else (False, "parabolic_sar_not_bear")
+        return False, "parabolic_sar_trigger_unknown"
+    if kind == "heikin_ashi":
+        trend = str(params.get("trend") or "bullish").strip().lower()
+        open_v = _indicator_metric(raw, kind, "ha_open", "open")
+        close_v = _indicator_metric(raw, kind, "ha_close", "close")
+        color = _text_from_obj(raw.get("heikin_ashi"), "trend", "color")
+        if color in ("bullish", "bearish"):
+            return (True, f"heikin_ashi_{color}") if color == trend else (False, "heikin_ashi_trend_mismatch")
+        if open_v is None or close_v is None:
+            return False, "heikin_ashi_value_missing"
+        is_bull = close_v > open_v
+        ok = (trend == "bullish" and is_bull) or (trend == "bearish" and not is_bull)
+        return (True, "heikin_ashi_trend_ok") if ok else (False, "heikin_ashi_trend_mismatch")
+    return False, f"unsupported_technical_{kind}"
+
+
 def evaluate_trade_start_conditions(signal: TradingViewSignalOut, plan: BotPlanRow | None) -> dict[str, object]:
-    """AND-chain from plan ``config_json.trade_start_conditions``.
-    Proof-based for technical indicators: alert JSON may include ``pinebitz_tsc``.
-    ``tv_webhook`` / aligned ``tv_screener`` / ``qfl_long`` can be satisfied from the signal alone.
-    """
+    """AND-chain from plan ``config_json.trade_start_conditions``."""
     out: dict[str, object] = {
         "enabled": False,
         "passed": True,
@@ -709,8 +862,7 @@ def evaluate_trade_start_conditions(signal: TradingViewSignalOut, plan: BotPlanR
             ok = signal.side == SignalSide.buy
             reason = "qfl_long_buy" if ok else "qfl_long_requires_buy"
         elif kind in TECHNICAL_TRADE_START_KINDS:
-            ok = False
-            reason = "technical_requires_pinebitz_tsc"
+            ok, reason = _evaluate_technical_row(kind=kind, params=params, signal=signal)
         else:
             ok = False
             reason = f"unknown_kind_{kind}"

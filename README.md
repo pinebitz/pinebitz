@@ -193,11 +193,12 @@ Current runtime support by condition kind:
   - `tv_webhook` (TradingView custom signal)
   - `tv_screener` (timeframe + side alignment)
   - `qfl_long` (requires buy side)
-- Technical kinds are accepted but require `pinebitz_tsc` proof in webhook payload:
+- Technical kinds are evaluated by backend from indicator values in webhook payload:
   - `rsi`, `ultimate_oscillator`, `bollinger_pctb`, `ma`, `adx`
   - `stochastic`, `macd`, `parabolic_sar`, `mfi`, `cci`, `heikin_ashi`
-- If a technical kind has no `pinebitz_tsc` proof, the job is rejected with
-  `technical_requires_pinebitz_tsc`.
+- Recommended payload shape for technical values:
+  - top-level keys (for example `rsi`, `macd`, `stoch_k`, `stoch_d`), or
+  - nested keys under `indicators.<kind>.<metric>` (for example `indicators.rsi.value`).
 
 ## Handoff Notes
 

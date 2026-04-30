@@ -269,15 +269,15 @@ else {
 
 if ($technicalIndexes.Count -gt 0) {
     $payloadD = $basePayload.Clone()
-    $results.Add((Invoke-TestCase -Name "D_technical_without_proof" -Payload $payloadD -ExpectedStatus "rejected" -ExpectedReasonContains @("technical_requires_pinebitz_tsc")))
+    $results.Add((Invoke-TestCase -Name "D_technical_without_payload_values" -Payload $payloadD -ExpectedStatus "rejected"))
 }
 else {
     $results.Add([PSCustomObject]@{
-        case_name = "D_technical_without_proof"
+        case_name = "D_technical_without_payload_values"
         pass = $true
         expected_status = "rejected"
         actual_status = "skipped"
-        expected_reason_tokens = "technical_requires_pinebitz_tsc"
+        expected_reason_tokens = ""
         actual_reasons = "no technical row in plan"
         signal_id = ""
         job_id = ""
