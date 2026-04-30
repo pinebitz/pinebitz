@@ -1,0 +1,10 @@
+.venv/
+venv/
+.env
+.env.compose
+*.pyc
+__pycache__/
+.python-version
+*.egg-info/
+dist/
+build/

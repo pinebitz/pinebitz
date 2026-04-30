@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pinebitz Dashboard</title>
+  <link rel="stylesheet" href="/assets/dashboard.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>pinebitz Dashboard</h1>
+      <p>Test the DCA Bot backend without a separate frontend stack.</p>
+    </div>
+    <div class="owner-box">
+      <label for="ownerKey">Owner Key</label>
+      <input id="ownerKey" value="smoke-owner" />
+      <button id="saveOwnerBtn">Apply</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="panel card">
+        <h3>Menu</h3>
+        <div class="nav-group">
+          <strong>Exchanges</strong>
+          <button type="button" class="nav-link" data-nav-page="exchanges" data-nav-mode="live">Live Exchanges</button>
+        </div>
+        <div class="nav-group">
+          <strong>DCA Bot</strong>
+          <button type="button" class="nav-link" data-nav-page="dca" data-nav-mode="live">Live Bots</button>
+          <button type="button" class="nav-link" data-nav-page="dca" data-nav-mode="all">All Bots</button>
+        </div>
+        <div class="nav-group">
+          <strong>Demo</strong>
+          <button type="button" class="nav-link" data-nav-page="exchanges" data-nav-mode="demo">Demo Exchanges</button>
+          <button type="button" class="nav-link" data-nav-page="dca" data-nav-mode="demo">Demo Bots</button>
+        </div>
+        <div class="nav-group">
+          <strong>Execution</strong>
+          <button type="button" class="nav-link" data-nav-page="execution" data-nav-mode="all">Execution Monitor</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="page">
+    <section class="panel card view-banner">
+      <div class="section-head">
+        <h2 id="currentViewTitle">Execution Monitor</h2>
+        <div id="currentViewMode" class="selected-plan-meta">mode: all</div>
+      </div>
+    </section>
+    <section class="panel grid-3 stats" data-page="execution">
+      <div class="card stat-card">
+        <div class="stat-title">API Live</div>
+        <div id="healthLive" class="stat-value pending">Checking</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-title">API Ready</div>
+        <div id="healthReady" class="stat-value pending">Checking</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-title">Visible Bots</div>
+        <div id="botCount" class="stat-value">0</div>
+      </div>
+    </section>
+
+    <section id="section-exchanges-create" class="panel card" data-page="exchanges">
+      <div>
+        <h2>Create Connection</h2>
+        <form id="connectionForm" class="form-grid">
+          <label>Label<input name="label" value="Demo Binance UM" required /></label>
+          <label>Venue<input name="venue" value="binance" required /></label>
+          <label>Market Lane<input name="market_lane" value="futures_um" required /></label>
+          <label>Environment<input name="environment" value="testnet" required /></label>
+          <label>Credential Ref<input name="credential_ref" value="vault://demo/binance/usdm" /></label>
+          <label>Status
+            <select name="status">
+              <option value="active">active</option>
+              <option value="paused">paused</option>
+              <option value="error">error</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit">Create Connection</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="section-exchanges-cards" class="panel card" data-page="exchanges">
+      <div class="section-head">
+        <h2>Exchange Accounts</h2>
+        <div id="connectionsCardSummary" class="selected-plan-meta">accounts=0</div>
+      </div>
+      <div id="connectionsCards" class="account-card-grid"></div>
+    </section>
+
+    <section class="panel card" data-page="dca" data-show-modes="live,demo">
+        <h2>Create Bot Plan</h2>
+        <form id="planForm" class="form-grid">
+          <label>Connection
+            <select id="planConnectionId" name="connection_id" required></select>
+          </label>
+          <label>Name<input name="name" value="BTC USDT DCA Demo" required /></label>
+          <label>Instrument Kind
+            <select name="instrument_kind">
+              <option value="futures">futures</option>
+              <option value="spot">spot</option>
+            </select>
+          </label>
+          <label>Status
+            <select name="status">
+              <option value="active">active</option>
+              <option value="paused">paused</option>
+            </select>
+          </label>
+          <label>Enabled
+            <select name="enabled">
+              <option value="false">false</option>
+              <option value="true">true</option>
+            </select>
+          </label>
+          <label>Pair<input name="pair" value="BTC/USDT:USDT" required /></label>
+          <label>Direction
+            <select name="direction">
+              <option value="long">long</option>
+              <option value="short">short</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit">Create Plan</button>
+          </div>
+        </form>
+    </section>
+
+    <section id="section-dca-editor" class="panel card" data-page="dca" data-show-modes="live,demo">
+      <div class="section-head">
+        <div>
+          <h2>DCA Plan Editor</h2>
+          <p class="section-note">Edit plan, Paper run, Orders preview, Scenarios, or Snapshots (browser-local saves of editor + simulation state).</p>
+        </div>
+        <div id="selectedPlanMeta" class="selected-plan-meta">No plan selected</div>
+      </div>
+      <div class="plan-editor-tabs" role="tablist" aria-label="Plan editor">
+        <button type="button" class="plan-editor-tab active" role="tab" id="planEditorTabBtnEdit" aria-selected="true" aria-controls="planEditorTabPanelEdit" data-plan-editor-tab="edit">Edit plan</button>
+        <button type="button" class="plan-editor-tab" role="tab" id="planEditorTabBtnPaper" aria-selected="false" aria-controls="planEditorTabPanelPaper" data-plan-editor-tab="paper">Paper run</button>
+        <button type="button" class="plan-editor-tab" role="tab" id="planEditorTabBtnPreview" aria-selected="false" aria-controls="planEditorTabPanelPreview" data-plan-editor-tab="preview">Orders preview</button>
+        <button type="button" class="plan-editor-tab" role="tab" id="planEditorTabBtnScenarios" aria-selected="false" aria-controls="planEditorTabPanelScenarios" data-plan-editor-tab="scenarios">Scenarios</button>
+        <button type="button" class="plan-editor-tab" role="tab" id="planEditorTabBtnSnapshots" aria-selected="false" aria-controls="planEditorTabPanelSnapshots" data-plan-editor-tab="snapshots">Snapshots</button>
+      </div>
+      <div id="planEditorTabPanelEdit" class="plan-editor-tab-panel" role="tabpanel" aria-labelledby="planEditorTabBtnEdit">
+      <form id="planEditorForm" class="editor-grid">
+        <label>Plan
+          <select id="editorPlanId" name="plan_id">
+            <option value="">Select a bot plan</option>
+          </select>
+        </label>
+        <label>Name<input id="editorName" name="name" /></label>
+        <label>Instrument Kind
+          <select id="editorInstrumentKind" name="instrument_kind">
+            <option value="futures">futures</option>
+            <option value="spot">spot</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="editorStatus" name="status">
+            <option value="active">active</option>
+            <option value="paused">paused</option>
+          </select>
+        </label>
+        <label>Enabled
+          <select id="editorEnabled" name="enabled">
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        </label>
+        <label>Plan Version<input id="editorPlanVersion" name="plan_version" type="number" min="1" value="1" /></label>
+        <label>Pair<input id="editorPair" name="pair" /></label>
+        <label>Direction
+          <select id="editorDirection" name="direction">
+            <option value="long">long</option>
+            <option value="short">short</option>
+          </select>
+        </label>
+        <label>Base Order (USDT)<input id="editorBaseOrder" name="base_order_usdt" type="number" step="0.01" value="25" /></label>
+        <label>Leverage<input id="editorLeverage" name="leverage" type="number" min="1" step="1" value="5" /></label>
+        <label>Start Order Type
+          <select id="editorStartOrderType" name="start_order_type">
+            <option value="market">market</option>
+            <option value="limit">limit</option>
+          </select>
+        </label>
+        <label>Margin Mode
+          <select id="editorMarginMode" name="margin_mode">
+            <option value="cross">cross</option>
+            <option value="isolated">isolated</option>
+          </select>
+        </label>
+        <label>Take Profit %<input id="editorTakeProfit" name="tp_pct" type="number" step="0.1" value="1.0" /></label>
+        <label>Stop Loss %<input id="editorStopLoss" name="stop_loss_pct" type="number" step="0.1" value="0" /></label>
+        <label>Averaging Enabled
+          <select id="editorAveragingEnabled" name="averaging_enabled">
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        </label>
+        <label>Max Averaging Orders<input id="editorMaxOrders" name="max_orders" type="number" min="0" step="1" value="3" /></label>
+        <label>First Deviation %<input id="editorFirstDeviation" name="first_deviation_pct" type="number" step="0.1" value="3" /></label>
+        <label>Deviation Multiplier<input id="editorDeviationMultiplier" name="deviation_multiplier" type="number" step="0.1" value="1.5" /></label>
+        <label>Safety Order Size (USDT)<input id="editorSafetyOrderSize" name="safety_order_size" type="number" step="0.01" value="25" /></label>
+        <label>Order Size Multiplier<input id="editorOrderSizeMultiplier" name="order_size_multiplier" type="number" step="0.1" value="1" /></label>
+        <label class="full-width">Raw Notes / Tags<input id="editorNotes" name="notes" placeholder="optional notes for this test plan" /></label>
+        <div class="form-actions editor-actions">
+          <button id="savePlanEditorBtn" type="submit">Save DCA Plan</button>
+          <button id="resetPlanEditorBtn" class="ghost" type="button">Reload Selected Plan</button>
+        </div>
+      </form>
+      </div>
+      <div id="planEditorTabPanelPaper" class="plan-editor-tab-panel" role="tabpanel" aria-labelledby="planEditorTabBtnPaper" hidden>
+        <div class="section-head plan-editor-subhead">
+          <div>
+            <h3 class="plan-editor-subtitle">Paper run simulator</h3>
+            <p class="section-note">Uses the DCA fields from Edit plan (no need to save first). Custom or preset price path.</p>
+          </div>
+          <div id="simulationSummary" class="selected-plan-meta">No simulation yet</div>
+        </div>
+        <div class="inline-filters">
+          <label>Preset
+            <select id="simulationPreset">
+              <option value="drop_bounce">drop then bounce</option>
+              <option value="trend_up">trend up</option>
+              <option value="trend_down">trend down</option>
+              <option value="stop_loss_hit">stop loss hit</option>
+            </select>
+          </label>
+          <label>Price Path (comma separated)
+            <input id="simulationPath" placeholder="1.0,0.99,0.97,0.98,1.01" />
+          </label>
+          <button id="simulateAutoBtn" class="ghost" type="button">Generate Preset Path</button>
+          <button id="simulatePlanBtn" type="button">Run Simulation</button>
+        </div>
+        <div class="simulation-chart-card">
+          <div class="simulation-chart-head">
+            <strong>Timeline Chart</strong>
+            <div class="simulation-chart-legend">
+              <span><i class="legend-swatch price"></i>Price</span>
+              <span><i class="legend-swatch equity"></i>Equity / Unrealized PnL</span>
+              <span><i class="legend-swatch fill"></i>Fill</span>
+              <span><i class="legend-swatch tp"></i>Take Profit</span>
+              <span><i class="legend-swatch sl"></i>Stop Loss</span>
+            </div>
+          </div>
+          <div id="simulationChart" class="simulation-chart-empty">Run a simulation to render the timeline chart.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tick</th>
+                <th>Price</th>
+                <th>Action</th>
+                <th>Step</th>
+                <th>Avg Price</th>
+                <th>TP</th>
+                <th>SL</th>
+                <th>Cumulative USDT</th>
+                <th>PnL</th>
+                <th>ROI %</th>
+              </tr>
+            </thead>
+            <tbody id="simulationTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="planEditorTabPanelPreview" class="plan-editor-tab-panel" role="tabpanel" aria-labelledby="planEditorTabBtnPreview" hidden>
+        <div class="section-head plan-editor-subhead">
+          <div>
+            <h3 class="plan-editor-subtitle">Orders preview</h3>
+            <p class="section-note">DCA ladder from current editor values at one reference price (same as API preview).</p>
+          </div>
+        </div>
+        <div class="inline-filters">
+          <label>Reference Price
+            <input id="previewReferencePrice" type="number" step="0.0001" value="1.0000" />
+          </label>
+          <button id="previewPlanBtn" type="button">Run preview</button>
+          <div id="previewSummary" class="selected-plan-meta">No preview yet</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Kind</th>
+                <th>Deviation %</th>
+                <th>Order USDT</th>
+                <th>Cumulative USDT</th>
+                <th>Trigger Price</th>
+                <th>Avg Price</th>
+                <th>TP Price</th>
+              </tr>
+            </thead>
+            <tbody id="previewTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="planEditorTabPanelScenarios" class="plan-editor-tab-panel" role="tabpanel" aria-labelledby="planEditorTabBtnScenarios" hidden>
+        <div class="section-head plan-editor-subhead">
+          <div>
+            <h3 class="plan-editor-subtitle">Scenarios</h3>
+            <p class="section-note">Same preset price paths as Paper run, run for every scenario at once. Tune drawdown weight to bias the score.</p>
+          </div>
+          <div id="batchSimulationSummary" class="selected-plan-meta">No batch run yet</div>
+        </div>
+        <div class="inline-filters">
+          <label>Drawdown Weight
+            <input id="batchRiskWeight" type="number" step="0.1" min="0" value="1.0" />
+          </label>
+          <button id="runBatchSimulationBtn" type="button">Run All Presets</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Preset</th>
+                <th>Reason</th>
+                <th>Ticks</th>
+                <th>Filled</th>
+                <th>Total USDT</th>
+                <th>Close Price</th>
+                <th>PnL</th>
+                <th>ROI %</th>
+                <th>Max DD</th>
+                <th>Score</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="batchSimulationTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="planEditorTabPanelSnapshots" class="plan-editor-tab-panel" role="tabpanel" aria-labelledby="planEditorTabBtnSnapshots" hidden>
+        <div class="section-head plan-editor-subhead">
+          <div>
+            <h3 class="plan-editor-subtitle">Scenario snapshots</h3>
+            <p class="section-note">Saved in this browser only (localStorage). Stores editor DCA fields, paper path/preset, drawdown weight, and batch scenario results.</p>
+          </div>
+          <div id="snapshotSummary" class="selected-plan-meta">No snapshots saved</div>
+        </div>
+        <div class="inline-filters">
+          <label>Snapshot Name
+            <input id="snapshotName" placeholder="e.g. BTC long conservative" />
+          </label>
+          <button id="saveSnapshotBtn" type="button">Save Snapshot</button>
+          <button id="exportSnapshotsBtn" class="ghost" type="button">Export JSON</button>
+          <label class="file-input-label">Import JSON
+            <input id="importSnapshotsInput" type="file" accept="application/json" />
+          </label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Pair</th>
+                <th>Direction</th>
+                <th>Weight</th>
+                <th>Saved At</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="snapshotTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-trade-start-conditions" class="panel card trade-start-card" data-page="dca" data-show-modes="live,demo">
+      <div class="section-head trade-start-head">
+        <label class="trade-start-toggle-label">
+          <input type="checkbox" id="tradeStartEnabled" />
+          <span>Trade start condition</span>
+        </label>
+        <span class="section-note trade-start-hint">RSI, MACD, Stochastic, screener, … (evaluation not wired yet)</span>
+      </div>
+      <p class="section-note trade-start-explainer">
+        When enabled, every listed clause must be satisfied together (AND) before a trade may start on this plan. Saved with Save DCA Plan.
+      </p>
+      <fieldset id="tradeStartFieldset" class="trade-start-fieldset">
+        <div id="tradeStartConditionsList" class="trade-start-conditions-list"></div>
+        <div class="trade-start-foot">
+          <button type="button" id="tradeStartAddBtn" class="ghost">+ Add condition</button>
+          <span class="trade-start-and-note">All conditions use AND logic.</span>
+        </div>
+      </fieldset>
+    </section>
+
+    <section id="section-execution-signal-sender" class="panel card" data-page="dca" data-show-modes="demo">
+      <div class="section-head">
+        <div>
+          <h2>Send Test Signal</h2>
+          <p class="section-note">Webhook-style test fire (same path as TradingView). Visible only when workspace mode is demo (sidebar: Demo → Demo Bots), so plan edits and test signals stay in the demo lane.</p>
+        </div>
+      </div>
+      <form id="testSignalForm" class="form-grid">
+        <label>Symbol<input id="testSignalSymbol" value="BTCUSDT" /></label>
+        <label>Side
+          <select id="testSignalSide">
+            <option value="buy">buy</option>
+            <option value="sell">sell</option>
+            <option value="close">close</option>
+            <option value="close_all">close_all</option>
+          </select>
+        </label>
+        <label>Timeframe<input id="testSignalTimeframe" value="1h" /></label>
+        <label>Strategy<input id="testSignalStrategy" value="dashboard-test" /></label>
+        <label>Price<input id="testSignalPrice" type="number" step="0.0001" value="95200" /></label>
+        <label>Volume<input id="testSignalVolume" type="number" step="0.0001" value="0.01" /></label>
+        <label>Risk %<input id="testSignalRiskPct" type="number" step="0.01" placeholder="optional" /></label>
+        <label>Plan (optional)
+          <select id="testSignalPlanId">
+            <option value="">auto-match by owner + pair</option>
+          </select>
+        </label>
+        <label>Webhook Secret (optional)
+          <input id="testSignalWebhookSecret" placeholder="X-Webhook-Secret if required" />
+        </label>
+        <label>After Send
+          <select id="testSignalAfterSend">
+            <option value="none">create job only</option>
+            <option value="dispatch">auto dispatch if queued/approved</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button id="sendTestSignalBtn" type="submit">Send Test Signal</button>
+        </div>
+        <div class="form-actions quick-signal-actions">
+          <button type="button" class="ghost" data-action="quick-signal" data-side="buy">Quick Buy</button>
+          <button type="button" class="ghost" data-action="quick-signal" data-side="sell">Quick Sell</button>
+          <button type="button" class="ghost" data-action="quick-signal" data-side="close">Quick Close</button>
+          <button type="button" class="ghost" data-action="quick-signal" data-side="close_all">Quick Close All</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="section-execution-jobs" class="grid-2 tables-row" data-page="execution">
+      <div class="panel card">
+        <div class="section-head">
+          <h2>TradingView Signals</h2>
+          <button id="reloadSignalsBtn" type="button">Reload</button>
+        </div>
+        <div class="table-wrap tall">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Owner</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>TF</th>
+                <th>Price</th>
+                <th>TP</th>
+                <th>SL</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody id="signalsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel card">
+        <div class="section-head">
+          <h2>Execution Jobs</h2>
+          <div class="inline-filters">
+            <div id="jobsSummary" class="selected-plan-meta">queued=0 | approved=0 | filled=0 | rejected=0</div>
+            <div id="jobsAlert" class="selected-plan-meta">Alerts: none</div>
+            <label>Auto Refresh
+              <select id="autoRefreshSeconds">
+                <option value="0">off</option>
+                <option value="3">3s</option>
+                <option value="5" selected>5s</option>
+                <option value="10">10s</option>
+              </select>
+            </label>
+            <label>Alert Sound
+              <select id="alertSoundEnabled">
+                <option value="true" selected>on</option>
+                <option value="false">off</option>
+              </select>
+            </label>
+            <label>Desktop Notification
+              <select id="desktopNotifyEnabled">
+                <option value="false" selected>off</option>
+                <option value="true">on</option>
+              </select>
+            </label>
+            <button id="requestNotifyPermissionBtn" class="ghost" type="button">Enable Notification</button>
+            <div id="notifyPermissionStatus" class="selected-plan-meta">notify: unsupported</div>
+            <button id="toggleAutoRefreshBtn" class="ghost" type="button">Pause</button>
+            <button id="dispatchAllQueuedBtn" class="ghost" type="button">Dispatch All Queued</button>
+            <button id="clearTestQueueBtn" class="ghost" type="button">Clear Test Queue</button>
+            <button id="reloadJobsBtn" type="button">Reload</button>
+          </div>
+        </div>
+        <div class="table-wrap tall">
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Owner</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Adapter</th>
+                <th>Plan</th>
+                <th>Connection</th>
+                <th>Price</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="jobsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2 tables-row" data-page="execution">
+      <div class="panel card">
+        <div class="section-head">
+          <h2>Runtime Guard State</h2>
+          <button id="reloadRuntimeBtn" type="button">Reload</button>
+        </div>
+        <div id="runtimeGuardState" class="selected-plan-meta">No state yet</div>
+      </div>
+
+      <div class="panel card">
+        <div class="section-head">
+          <h2>Paper Positions</h2>
+          <button id="reloadPaperBtn" type="button">Reload</button>
+        </div>
+        <div class="inline-filters">
+          <label>Mark Price
+            <input id="paperMarkPriceAll" type="number" step="0.0001" value="1.0000" />
+          </label>
+          <button id="markPaperAllBtn" class="ghost" type="button">Mark All</button>
+        </div>
+        <div class="table-wrap tall">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Qty</th>
+                <th>Avg Entry</th>
+                <th>Mark</th>
+                <th>Unrealized PnL</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody id="paperPositionsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-execution-audit" class="panel card" data-page="execution">
+      <div class="section-head">
+        <div>
+          <h2>Execution Audit Trail</h2>
+          <p class="section-note">Recent execution lifecycle events (job created, status changes, dispatch, fills).</p>
+        </div>
+        <div class="inline-filters">
+          <label>Job ID (optional)
+            <input id="auditJobId" placeholder="filter by job_id" />
+          </label>
+          <button id="reloadAuditBtn" type="button">Reload</button>
+          <button id="clearAuditFilterBtn" class="ghost" type="button">Clear Filter</button>
+        </div>
+      </div>
+      <div class="table-wrap tall">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Job</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="auditTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="section-dca-bots" class="panel card" data-page="dca" data-show-modes="all">
+      <div class="section-head">
+        <h2>Bots</h2>
+        <div class="inline-filters">
+          <label>Market Lane
+            <select id="botMarketLaneFilter">
+              <option value="">all</option>
+              <option value="futures_um">futures_um</option>
+              <option value="spot">spot</option>
+            </select>
+          </label>
+          <label>Venue<input id="botVenueFilter" placeholder="binance" /></label>
+          <label>Enabled
+            <select id="botEnabledFilter">
+              <option value="">all</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+          <button id="refreshAllBtn" type="button">Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th>Connection</th>
+              <th>Venue</th>
+              <th>Lane</th>
+              <th>Instrument</th>
+              <th>Enabled</th>
+            </tr>
+          </thead>
+          <tbody id="botsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel card" data-page="dca" data-show-modes="all">
+      <div id="section-dca-plans" class="section-head">
+        <h2>Bot Plans</h2>
+        <button id="reloadPlansBtn" type="button">Reload</button>
+      </div>
+      <div class="table-wrap tall">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Enabled</th>
+              <th>Pair</th>
+              <th>Direction</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="plansTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel card" data-page="execution">
+      <div class="section-head">
+        <h2>Event Log</h2>
+        <button id="clearLogBtn" type="button">Clear</button>
+      </div>
+      <pre id="eventLog" class="log-box"></pre>
+    </section>
+    </main>
+  </div>
+
+  <script src="/assets/dashboard.js"></script>
+</body>
+</html>
