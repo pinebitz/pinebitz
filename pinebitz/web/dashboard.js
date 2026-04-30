@@ -309,7 +309,7 @@ function updateTradeStartConditionsDisabled() {
   if (fs && box) fs.disabled = !box.checked;
 }
 
-/** Dashboard trade-start AND clauses (persisted on plan; runtime evaluator TBD). */
+/** Dashboard trade-start AND clauses and current runtime support labels. */
 const TRADE_START_KINDS = [
   { v: 'tv_webhook', label: 'TradingView custom signal' },
   { v: 'tv_screener', label: 'TradingView Crypto Screener' },
@@ -326,6 +326,20 @@ const TRADE_START_KINDS = [
   { v: 'cci', label: 'Commodity Channel Index' },
   { v: 'heikin_ashi', label: 'Heikin Ashi' },
 ];
+const TRADE_START_DIRECT_KINDS = new Set(['tv_webhook', 'tv_screener', 'qfl_long']);
+const TRADE_START_PROOF_KINDS = new Set([
+  'rsi',
+  'ultimate_oscillator',
+  'bollinger_pctb',
+  'ma',
+  'adx',
+  'stochastic',
+  'macd',
+  'parabolic_sar',
+  'mfi',
+  'cci',
+  'heikin_ashi',
+]);
 
 const TSC_TF_OPTS = [
   ['1m', '1 minute'],
@@ -424,8 +438,13 @@ function tscNumberHtml(dataKey, val, attrs = {}) {
 }
 
 function tradeStartKindOptionsHtml(kind) {
+  const supportTag = (v) => {
+    if (TRADE_START_DIRECT_KINDS.has(v)) return 'direct';
+    if (TRADE_START_PROOF_KINDS.has(v)) return 'proof-required';
+    return 'unknown';
+  };
   return TRADE_START_KINDS.map(
-    ({ v, label }) => `<option value="${tscEscAttr(v)}"${v === kind ? ' selected' : ''}>${tscEscHtml(label)}</option>`,
+    ({ v, label }) => `<option value="${tscEscAttr(v)}"${v === kind ? ' selected' : ''}>${tscEscHtml(`${label} [${supportTag(v)}]`)}</option>`,
   ).join('');
 }
 
@@ -444,7 +463,7 @@ function tradeStartParamsHtml(kind, row) {
     return '<p class="section-note trade-start-kind-note">Match when TradingView webhook payload is accepted for this owner/plan pair.</p>';
   }
   if (kind === 'qfl_long') {
-    return '<p class="section-note trade-start-kind-note">QFL long-only lane (evaluator not implemented).</p>';
+    return '<p class="section-note trade-start-kind-note">QFL long-only lane (requires signal side = buy).</p>';
   }
   if (kind === 'tv_screener') {
     return `<div class="trade-start-param-grid">
