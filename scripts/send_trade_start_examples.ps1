@@ -27,7 +27,7 @@ function Invoke-ApiJson {
 
 function Copy-Object {
     param([Parameter(Mandatory = $true)][object]$InputObject)
-    return ($InputObject | ConvertTo-Json -Depth 40 | ConvertFrom-Json -Depth 40)
+    return ($InputObject | ConvertTo-Json -Depth 40 | ConvertFrom-Json)
 }
 
 function Wait-JobBySignalId {
