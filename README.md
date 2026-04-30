@@ -199,6 +199,7 @@ Current runtime support by condition kind:
 - Recommended payload shape for technical values:
   - top-level keys (for example `rsi`, `macd`, `stoch_k`, `stoch_d`), or
   - nested keys under `indicators.<kind>.<metric>` (for example `indicators.rsi.value`).
+- Copy-paste payload examples: `Doc/trade_start_payload_examples.md`.
 
 ## Handoff Notes
 
