@@ -2,6 +2,12 @@
 
 Use these payloads with `POST /signals/tradingview/webhook` to test technical trade-start conditions without `pinebitz_tsc`.
 
+Run all eleven technical kinds in one pass (restores plan config afterward):
+
+```powershell
+make test-trade-start-examples OWNER_KEY=smoke-owner PLAN_NAME="YOUR_PLAN_NAME"
+```
+
 Base fields used in all examples:
 
 ```json
